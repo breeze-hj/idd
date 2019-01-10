@@ -25,7 +25,7 @@
     
 ### 示例
 
-    String[] addresses = { ":18727", ":18728", ":18729" };
+                String[] addresses = { ":18727", ":18728", ":18729" };
 		String allAddressesStr = String.join(",", addresses);
 
 		IddClient[] iddClients = new IddClient[addresses.length];
