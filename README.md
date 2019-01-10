@@ -36,6 +36,7 @@
             iddClients[i] = IddApplication.create(addresses[i], allAddressesStr).getIddClient();
         }
 
+  以下请求用任一IddClient，都返回相同结果。
   2-创建一个名称为user的sequence
 
         // create
