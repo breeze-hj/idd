@@ -22,10 +22,11 @@
 
     目前实现了原型，未处理边界、异常情况。
     基于raft选举、内存同步队列，还可以做其他有趣、有意义的事情。
+    示例代码位于源代码eastwind.idd.test。 
     
-### 示例
+### 示例--嵌入式
 
-1-创建一个3节点的idd集群
+  1-创建一个3节点的idd集群
 
         String[] addresses = { ":18727", ":18728", ":18729" };
         String allAddressesStr = String.join(",", addresses);
@@ -35,7 +36,7 @@
             iddClients[i] = IddApplication.create(addresses[i], allAddressesStr).getIddClient();
         }
 
-2-创建一个名称为user的sequence
+  2-创建一个名称为user的sequence
 
         // create
         CompletableFuture<Sequence> cf = iddClients[0].create("user");
@@ -49,9 +50,34 @@
             return null;
         });
 		
-3-获取下一个id
+  3-获取下一个id
 
         // get id
         for (int i = 0; i < 10; i++) {
             iddClients[i % iddClients.length].next("user").thenAccept(s -> System.out.println("new id: " + s.getNextVal())).join();
         }
+
+### 示例--HTTP
+
+    idd支持HTTP形式调用。
+    
+  1-控制台
+   
+    http://127.0.0.1:18728/
+       
+  输出
+    
+    {
+  "address" : ":18728",
+  "role" : "LEADER",
+  "servers" : ":18727,:18728,:18729",
+  "startAt" : "2019-01-10 18:37:43",
+  "currentTerm" : 1,
+  "logId" : 12,
+  "sequences" : [ {
+    "name" : "user",
+    "version" : 1,
+    "logId" : 12,
+    "nextVal" : 11
+  } ]
+}
