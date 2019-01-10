@@ -25,28 +25,33 @@
     
 ### 示例
 
-                String[] addresses = { ":18727", ":18728", ":18729" };
-		String allAddressesStr = String.join(",", addresses);
+1-创建一个3节点的idd集群
 
-		IddClient[] iddClients = new IddClient[addresses.length];
-		for (int i = 0; i < addresses.length; i++) {
-			iddClients[i] = IddApplication.create(addresses[i], allAddressesStr).getIddClient();
-		}
+        String[] addresses = { ":18727", ":18728", ":18729" };
+        String allAddressesStr = String.join(",", addresses);
+	
+        IddClient[] iddClients = new IddClient[addresses.length];
+        for (int i = 0; i < addresses.length; i++) {
+            iddClients[i] = IddApplication.create(addresses[i], allAddressesStr).getIddClient();
+        }
 
-		// create
-		CompletableFuture<Sequence> cf = iddClients[0].create("user");
-		cf.thenAccept(s -> System.out.println("create sequence: " + s.getName() + "."));
-		cf.join();
+2-创建一个名称为user的sequence
 
-		// create if exist
-		cf = iddClients[1].create("user");
-		cf.exceptionally(th -> {
-			System.err.println(th.getMessage());
-			return null;
-		});
+        // create
+        CompletableFuture<Sequence> cf = iddClients[0].create("user");
+        cf.thenAccept(s -> System.out.println("create sequence: " + s.getName() + "."));
+        cf.join();
+
+        // create if exist
+        cf = iddClients[1].create("user");
+        cf.exceptionally(th -> {
+            System.err.println(th.getMessage());
+            return null;
+        });
 		
-		// get id
-		for (int i = 0; i < 10; i++) {
-			iddClients[i % iddClients.length].next("user")
-					.thenAccept(s -> System.out.println("new id: " + s.getNextVal())).join();
-		}
+3-获取下一个id
+
+        // get id
+        for (int i = 0; i < 10; i++) {
+            iddClients[i % iddClients.length].next("user").thenAccept(s -> System.out.println("new id: " + s.getNextVal())).join();
+        }
