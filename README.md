@@ -63,21 +63,20 @@
     
   1-控制台
    
-    http://127.0.0.1:18728/
-       
-  输出
-    
+    Get: http://127.0.0.1:18728/
+    Response:
     {
-  "address" : ":18728",
-  "role" : "LEADER",
-  "servers" : ":18727,:18728,:18729",
-  "startAt" : "2019-01-10 18:37:43",
-  "currentTerm" : 1,
-  "logId" : 12,
-  "sequences" : [ {
-    "name" : "user",
-    "version" : 1,
-    "logId" : 12,
-    "nextVal" : 11
-  } ]
-}
+        "address" : ":18728",
+        "role" : "LEADER",
+        "servers" : ":18727,:18728,:18729",
+        "startAt" : "2019-01-10 18:37:43",
+        "currentTerm" : 1,
+        "logId" : 12,
+        "sequences" : [ {
+            "name" : "user",
+            "version" : 1,
+            "logId" : 12,
+            "nextVal" : 11
+            } 
+	]
+    }
