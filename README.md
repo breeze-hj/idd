@@ -80,3 +80,15 @@
             } 
         ]
     }
+  
+  2-ID相关
+  
+    Put/Get/Post分别表示创建、查询、申请，如：
+    Post：http://127.0.0.1:18728/user
+    Response:
+    {
+        "name" : "user",
+        "version" : 1,   // sequence的版本号，创建时的logId
+        "logId" : 12,    // raft的logId
+        "nextVal" : 11   // new id
+    }
