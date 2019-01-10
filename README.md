@@ -5,14 +5,48 @@
     idd是一款分布式自增id序列生成框架，基于netty实现，不依赖任何第3方容器、中间件。
     idd实现了raft协议的选举部分，客户端请求都将转发给leader，leader采用多数派提交方式来保证一致性。
     由于场景特性，服务需要提供"当前id是多少"，不需要提供"历史上产生了哪些id"。
-    所以idd实现了顺序一致性，未实现线性一致性，不保存历史记录，同时，换来大幅度的性能提升。
+    所以，idd实现了顺序一致性，未实现线性一致性，不保存历史记录，同时，换来大幅度的性能提升。
     
 ### 请求压缩优化
 
     假设f(100, 1)表示：100个请求分别申请1个id。
     假设ABC3个节点的idd集群，A是leader。每个节点收到客户端f(100, 1)，BC提交给A f(1, 100)，A广播 f(1， 300)。
-    即，同一时刻的ID请求，leader只需要增加计数，在一次广播中完成，后由具体节点分发。
-    经请求压缩优化后，idd每次请求延时为7-10ms，TPS在1万以上,上限为物理上限。
+    即，同一时刻的ID请求，leader只需要增加计数，在一轮广播中完成落盘，后由具体节点分发。
+    经请求压缩优化后，idd每次请求延时为8-10ms，TPS在1万以上，上限为物理上限。
     
     如何提供更快的速度和更严格的一致性?
-    除了使用SSD硬盘外，可提供二进制的调用客户端，每次请求只访问leader，可以减少一次网络IO，近似实现线性一致性。
+    除了使用SSD硬盘外，可提供二进制的客户端，每次请求只访问leader，可以减少一次网络IO，并近似实现线性一致性。
+    此时，idd集群演变为可自动切换的一主多从集群。
+
+### 现状
+
+    目前实现了原型，未处理边界、异常情况。
+    基于raft选举、内存同步队列，还可以做其他有趣、有意义的事情。
+    
+### 示例
+
+    String[] addresses = { ":18727", ":18728", ":18729" };
+		String allAddressesStr = String.join(",", addresses);
+
+		IddClient[] iddClients = new IddClient[addresses.length];
+		for (int i = 0; i < addresses.length; i++) {
+			iddClients[i] = IddApplication.create(addresses[i], allAddressesStr).getIddClient();
+		}
+
+		// create
+		CompletableFuture<Sequence> cf = iddClients[0].create("user");
+		cf.thenAccept(s -> System.out.println("create sequence: " + s.getName() + "."));
+		cf.join();
+
+		// create if exist
+		cf = iddClients[1].create("user");
+		cf.exceptionally(th -> {
+			System.err.println(th.getMessage());
+			return null;
+		});
+		
+		// get id
+		for (int i = 0; i < 10; i++) {
+			iddClients[i % iddClients.length].next("user")
+					.thenAccept(s -> System.out.println("new id: " + s.getNextVal())).join();
+		}
