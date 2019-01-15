@@ -1,18 +1,23 @@
 # idd
 
+### 背景
+    
+    自增主键不方便分库分表，uuid对innodb不友好，snowflake数值百亿亿可能有点大、还依赖时钟。
+    可否有别的分布式id方案?
+
 ### 简介
 
-    idd是一款分布式自增id序列生成框架，基于netty实现，不依赖任何第3方容器、中间件。
+    idd是一款纯异步、支持嵌入式/HTTP、小巧的分布式自增id序列生成框架，基于netty实现，不依赖任何第3方容器、中间件。
     idd实现了raft协议的选举部分，客户端请求都转发给leader，leader采用多数派提交方式保证一致性。
     由于场景特性，id服务需要提供"当前id是多少"，不需要提供"历史上产生了哪些id"。
     所以，idd实现了顺序一致性，未实现线性一致性，不保存历史记录，同时，换来大幅度的性能提升。
     
 ### 请求压缩优化
 
-    假设f(100, 1)表示：100个请求分别申请1个id。
-    假设ABC3个节点的idd集群，A是leader。每个节点收到客户端f(100, 1)，BC提交给A f(1, 100)，A广播 f(1， 300)。
-    即，同一时刻的ID请求，leader只需要增加计数，在一轮广播中完成落盘，后由具体节点分发。
-    经请求压缩优化后，idd每次请求延时为8-10ms，TPS在万以上，上限接近网络IO上限。
+    假设get(100, 1)表示：100个请求分别申请1个id。
+    假设ABC3个节点的idd集群，A是leader。每个节点收到客户端get(100, 1)，BC提交给A get(1, 100)，A广播 get(1， 300)。
+    即，同一时刻的ID请求，leader只需要增加计数，在一轮广播中完成落盘，后由接入节点分发。
+    经请求压缩优化后，delay和TPS与并发数无关。预计，delay为8-10ms，TPS在万以上，上限接近网络IO上限。
     
     如何提供更快的速度和更严格的一致性?
     除了使用SSD硬盘外，可提供二进制的客户端，每次请求只访问leader，可以减少一次网络IO，并近似实现线性一致性。
@@ -21,7 +26,7 @@
 ### 现状
 
     目前实现了原型，未处理边界、异常情况。
-    基于raft选举、内存同步队列，还可以做其他有趣、有意义的事情。
+    未实现请求压缩，未将信息持久化。
     示例代码位于源代码eastwind.idd.test。 
     
 ### 示例--嵌入式
@@ -33,6 +38,7 @@
 	
         IddClient[] iddClients = new IddClient[addresses.length];
         for (int i = 0; i < addresses.length; i++) {
+	    // 示例代码，在一个JVM里启动了3个idd application
             iddClients[i] = IddApplication.create(addresses[i], allAddressesStr).getIddClient();
         }
 
@@ -56,6 +62,7 @@
 
         // get id
         for (int i = 0; i < 10; i++) {
+	    // 使用不同的客户端获取id
             iddClients[i % iddClients.length].next("user").thenAccept(s -> System.out.println("new id: " + s.getNextVal())).join();
         }
 
