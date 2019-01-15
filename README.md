@@ -27,8 +27,8 @@
 
     目前实现了原型，未处理边界、异常情况。
     未实现请求压缩，未将信息持久化。
-    示例代码位于源代码eastwind.idd.test。 
-    https://github.com/breeze-hj/idd/blob/master/src/test/java/eastwind/idd/test/TestIdd.java
+    [示例代码](https://github.com/breeze-hj/idd/blob/master/src/test/java/eastwind/idd/test/TestIdd.java) 
+    
     
 ### 示例--嵌入式
 
